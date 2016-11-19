@@ -11,8 +11,12 @@ config = ConfigParser.ConfigParser()
 config.read('app.cfg')
 
 connection = happybase.Connection(config.get('default', 'HBASE_HOST'))
+connection.open()
+
 kafka = connect_kafka()
-producer = SimpleProducer(kafka)
+# producer = SimpleProducer(kafka)
+
+current_table = connection.table('userscore')
 
 class RootAPI:
 	def on_get(self, req, res):
@@ -20,16 +24,18 @@ class RootAPI:
 
 class HBaseQuery:
 	def on_get(self, req, res):
-		connection.open()
-		current_table = connection.table('userscore')
+		# connection.open()
+		# current_table = connection.table('userscore')
 		
 		candidate_id = req.get_param('candidate_id') or req.get_param('id') or ''
+		score = req.get_param('score') or 0
 		print '==============', candidate_id
 		result = current_table.row(candidate_id)
 
 		if not result:
-			request_json = { "candidate_id": candidate_id }
-			producer.send_message('wordcounttopic', json.dumps(request_json))
+			request_json = { "name": candidate_id, "score": score }
+			producer = SimpleProducer(kafka)
+			producer.send_messages('userscore', json.dumps(request_json))
 			time.sleep(2)
 			result = current_table.row(candidate_id)
 
