@@ -64,7 +64,7 @@ api.add_route('/query', HBaseQuery())
 api.add_route('/tables', Tables())
 api.add_route('/help', StaticResource())
 
-print __name__
+
 
 if __name__ == '__main__':
 	httpd = simple_server.make_server('0.0.0.0', 8000, api)

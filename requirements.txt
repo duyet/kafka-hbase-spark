@@ -2,3 +2,5 @@ falcon
 cherrypy
 happybase
 kafka-python
+flask
+flask_restful
