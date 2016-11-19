@@ -11,7 +11,7 @@ config = ConfigParser.ConfigParser()
 config.read('app.cfg')
 
 connection = happybase.Connection(config.get('default', 'HBASE_HOST'))
-connection.open()
+#connection.open()
 
 kafka = connect_kafka()
 # producer = SimpleProducer(kafka)
@@ -24,8 +24,11 @@ class RootAPI:
 
 class HBaseQuery:
 	def on_get(self, req, res):
-		# connection.open()
-		# current_table = connection.table('userscore')
+		global connection, current_table
+
+		# connection = happybase.Connection(config.get('default', 'HBASE_HOST'))
+		connection.open()
+		current_table = connection.table('userscore')
 		
 		candidate_id = req.get_param('candidate_id') or req.get_param('id') or ''
 		score = req.get_param('score') or 0
@@ -39,6 +42,7 @@ class HBaseQuery:
 			time.sleep(2)
 			result = current_table.row(candidate_id)
 
+		connection.close()
 		res.body = json.dumps(result)
 		
 class Tables:
@@ -59,6 +63,8 @@ api.add_route('/', RootAPI())
 api.add_route('/query', HBaseQuery())
 api.add_route('/tables', Tables())
 api.add_route('/help', StaticResource())
+
+print __name__
 
 if __name__ == '__main__':
 	httpd = simple_server.make_server('0.0.0.0', 8000, api)
