@@ -30,17 +30,31 @@ class HBaseQuery:
 		connection.open()
 		current_table = connection.table('userscore')
 		
-		candidate_id = req.get_param('candidate_id') or req.get_param('id') or ''
-		score = req.get_param('score') or 0
-		print '==============', candidate_id
-		result = current_table.row(candidate_id)
+		req_data = {
+			'pclass': req.get_param('pclass'),
+			'age': req.get_param('age'),
+			'sex': req.get_param('sex'),
+			'fare': req.get_param('fare')
+		}
+
+		#score = req.get_param('score') or 0
+		#print '==============', candidate_id
+		result = current_table.row(req_data['fare'])
 
 		if not result:
-			request_json = { "name": candidate_id, "score": score }
+			#request_json = { "name": candidate_id, "score": score }
 			producer = SimpleProducer(kafka)
-			producer.send_messages('userscore', json.dumps(request_json))
-			time.sleep(2)
-			result = current_table.row(candidate_id)
+			producer.send_messages('userscore', json.dumps(req_data))
+			
+
+			n = 3
+			while n >= 0:
+				result = current_table.row(req_data['fare'])
+				if not result:
+					time.sleep(1)
+					n -= 1
+				else:
+					break
 
 		connection.close()
 		res.body = json.dumps(result)
